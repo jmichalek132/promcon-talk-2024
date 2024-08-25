@@ -1,0 +1,76 @@
+mimir:
+  structuredConfig:
+    ruler_storage:
+      backend: local
+      local:
+        directory: "/rules-repo/current/rules/rules/metrics"
+ruler:
+  initContainers:
+    - name: git-sync-init
+      image: registry.k8s.io/git-sync/git-sync:v4.2.3
+      imagePullPolicy: IfNotPresent
+      args:
+        - --depth=1
+        - --link=current
+        - --root=/rules-repo
+        - --one-time
+        - --repo=https://github.com/jmichalek132/promcon-talk-2024
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "150m"
+        limits:
+          memory: "128Mi"
+          cpu: "300m"
+      volumeMounts:
+      - mountPath: /rules-repo
+        name: rules-volume
+  extraContainers:
+    - name: git-sync
+      image: registry.k8s.io/git-sync/git-sync:v4.2.3
+      imagePullPolicy: IfNotPresent
+      args:
+        - --depth=1
+        - --link=current
+        - --root=/rules-repo
+        - --repo=https://github.com/jmichalek132/promcon-talk-2024
+      ports:
+        - containerPort: 3000
+          name: metrics
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "150m"
+        limits:
+          memory: "128Mi"
+          cpu: "300m"
+      volumeMounts:
+      - mountPath: /rules-repo
+        name: rules-volume
+  extraVolumes:
+    - name: rules-volume
+      emptyDir: {}
+  extraVolumeMounts:
+    - mountPath: /rules-repo
+      name: rules-volume
+
+extraObjects:
+  - kind: ServiceMonitor
+    apiVersion: monitoring.coreos.com/v1
+    metadata:
+      name: metrics-mimir-ruler-git-sync
+      labels:
+        app.kubernetes.io/instance: metrics
+        app.kubernetes.io/name: mimir
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: ruler
+          app.kubernetes.io/instance: metrics
+          app.kubernetes.io/name: mimir
+      endpoints:
+        - targetPort: metrics
+          relabelings:
+          - action: replace
+            replacement: testy
+            targetLabel: cluster

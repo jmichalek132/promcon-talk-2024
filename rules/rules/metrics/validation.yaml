@@ -1,0 +1,83 @@
+validationRules:
+
+  # Default reccomended validations from https://github.com/FUSAKLA/promruval/blob/master/docs/default_validation.yaml
+  - name: check-groups
+    scope: Group
+    validations:
+      - type: hasAllowedEvaluationInterval
+        params:
+          minimum: "20s"
+      - type: maxRulesPerGroup
+        params:
+          limit: 20
+
+  - name: check-alerts
+    scope: Alert
+    validations:
+      - type: validateLabelTemplates
+      - type: validateAnnotationTemplates
+      - type: forIsNotLongerThan
+        params:
+          limit: "1d"
+      - type: keepFiringForIsNotLongerThan
+        params:
+          limit: "1d"
+  
+  - name: check-all-rules
+    scope: All rules
+    validations:
+      - type: nonEmptyLabels
+      - type: expressionDoesNotUseIrate
+      - type: rateBeforeAggregation
+      - type: expressionWithNoMetricName
+      - type: expressionDoesNotUseRangeShorterThan
+        params:
+          limit: "4m"
+  
+  - name: check-severity-label
+    scope: Alert
+    validations:
+      - type: hasLabels
+        params:
+          labels: ["severity"]
+      - type: labelHasAllowedValue
+        params:
+          label: "severity"
+          allowedValues: ["Standard", "High", "Medium", "Informational", "info", "warning", "medium", "critical", "CLEARING"]
+
+  - name: check-ci-label
+    scope: Alert
+    validations:
+      - type: hasLabels
+        params:
+          labels: ["ci"]
+
+  - name: check-apmid-label
+    scope: Alert
+    validations:
+      - type: hasLabels
+        params:
+          labels: ["apmid"]
+
+  - name: check-mutually-exclusive
+    scope: Alert
+    validations:
+      - type: exclusiveLabels
+        params:
+          firstLabel: "evaIdLabels"
+          secondLabel: "__alertId__"
+
+  - name: check-send_mailalerts-label
+    scope: Alert
+    validations:
+      - type: labelHasAllowedValue
+        params:
+          label: "send_mailalerts"
+          allowedValues: ["true"]
+
+  - name: check-summary-annotation
+    scope: Alert
+    validations:
+      - type: hasAnyOfAnnotations
+        params:
+          annotations: ["summary", "message"]

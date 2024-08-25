@@ -1,0 +1,13 @@
+groups:
+  - name: Loki
+    rules:
+      - alert: LokiRulerInvalidRulesOrAlertsDeployed
+        annotations:
+          summary: Loki ruler `{{ $labels.service_name }}` in `{{ $labels.k8s_cluster_name }}` is failing to parse invalid rules or alerts, check logs for details.
+          send_mailalerts: "yes"
+        expr: |
+          sum(count_over_time( {k8s_cluster_name="test-cluster", service_name="loki", service_component="ruler"}  |= `error parsing` != "evaluating rule" [15m])) by (k8s_cluster_name, deployment_environment, service_name, service_component)
+        labels:
+          severity: warning
+          team: a-team
+          id: testID
