@@ -1,0 +1,65 @@
+
+serviceMonitor:
+  enabled: true
+  interval: "60s"
+grafana.ini:
+  paths:
+    provisioning: "/rules-repo/current/rules/grafana/metamonitoring/provisioning" # replace test with tenant_name
+  dashboards:
+    min_refresh_interval: "1m"
+
+extraVolumes: 
+- name: rules-volume
+  emptyDir: {}
+
+extraVolumeMounts:
+- mountPath: /rules-repo
+  name: rules-volume
+
+extraInitContainers: 
+- name: git-sync-init
+  image: registry.k8s.io/git-sync/git-sync:v4.2.3
+  imagePullPolicy: IfNotPresent
+  args:
+    - --depth=1
+    - --link=current
+    - --root=/rules-repo
+    - --one-time
+    - --repo=https://github.com/jmichalek132/promcon-talk-2024
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "150m"
+    limits:
+      memory: "128Mi"
+      cpu: "300m"
+  volumeMounts:
+  - mountPath: /rules-repo
+    name: rules-volume
+
+extraContainers: |
+  - name: git-sync 
+    image: registry.k8s.io/git-sync/git-sync:v4.2.3
+    imagePullPolicy: IfNotPresent
+    args:
+      - --depth=1
+      - --period=2m
+      - --link=current
+      - --root=/rules-repo
+      - --http-bind=:3001
+      - --http-metrics
+      - --max-failures=30
+      - --repo=https://github.com/jmichalek132/promcon-talk-2024
+    ports:
+      - containerPort: 3001
+        name: metrics
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "150m"
+      limits:
+        memory: "128Mi"
+        cpu: "300m"
+    volumeMounts:
+    - mountPath: /rules-repo
+      name: rules-volume

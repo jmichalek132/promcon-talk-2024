@@ -1,0 +1,74 @@
+pr:
+  branches:
+    include:
+    - "*"
+  paths:
+    include:
+    - rules
+    - examples
+    - grafana
+    - dashboards
+trigger: none
+
+
+jobs:
+- job: promruval_rules_validation
+  displayName: "Promruval rules validation"
+  steps:
+    - script: echo '##vso[task.prependpath]$(HOME)/.local/bin'
+      displayName: "Extend PATH with local bin"
+
+    - script: |
+        curl -L "https://github.com/FUSAKLA/promruval/releases/download/v${promruvalVersion}/promruval_${promruvalVersion}_linux_amd64.tar.gz" > /tmp/promruval.tar.gz
+        tar xf /tmp/promruval.tar.gz -C /tmp/
+        mkdir -p "${HOME}/.local/bin/"
+        mv /tmp/promruval "${HOME}/.local/bin/"
+      env:
+        promruvalVersion: 3.0.0
+      displayName: 'Download promruval'
+
+    - script: |
+        promruval validate --support-mimir --config-file=./rules/metrics/validation.yaml rules/metrics/*/*.yaml
+      displayName: 'Run promruval validation for metrics'
+
+    - script: |
+        promruval validate --support-loki --config-file=./rules/logs/validation.yaml rules/logs/*/*.yaml
+      displayName: 'Run promruval validation for logs'
+
+- job: run_promtool
+  displayName: "Run promtool"
+  steps:
+    - script: echo '##vso[task.prependpath]$(HOME)/.local/bin'
+      displayName: "Extend PATH with local bin"
+
+    - script: |
+        curl -L "https://github.com/prometheus/prometheus/releases/download/v${promVersion}/prometheus-${promVersion}.linux-amd64.tar.gz" > /tmp/prometheus.tar.gz
+        tar xf /tmp/prometheus.tar.gz -C /tmp/
+        mkdir -p "${HOME}/.local/bin/"
+        cp /tmp/prometheus-$promVersion.linux-amd64/promtool "${HOME}/.local/bin/promtool"
+      env:
+        promVersion: 2.49.1
+      displayName: 'Download promtool'
+
+    - script: |
+        ./scripts/promtool_unit_tests.sh
+      displayName: 'Run unit tests'
+
+- job: run_lokitool
+  displayName: "Run lokitool"
+  steps:
+    - script: echo '##vso[task.prependpath]$(HOME)/.local/bin'
+      displayName: "Extend PATH with local bin"
+
+    - script: |
+        curl -L "https://github.com/grafana/loki/releases/download/v${lokitoolVersion}/lokitool-linux-amd64.zip" > /tmp/lokitool-linux-amd64.zip
+        unzip /tmp/lokitool-linux-amd64.zip -d /tmp/
+        mkdir -p "${HOME}/.local/bin/"
+        cp /tmp/lokitool-linux-amd64 "${HOME}/.local/bin/lokitool"
+      env:
+        lokitoolVersion: 3.1.0
+      displayName: 'Download lokitool'
+
+    - script: |
+        lokitool rules check rules/logs/*/*.yaml
+      displayName: 'Run lokitool validation'

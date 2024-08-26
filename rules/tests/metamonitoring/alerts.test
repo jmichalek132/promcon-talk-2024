@@ -1,0 +1,27 @@
+rule_files:
+    - ../../rules/metrics/metamonitoring/alerts.yaml
+
+evaluation_interval: 1m
+
+tests:
+    - interval: 1m
+      input_series:
+          - series: 'cluster_namespace_job_route:tempo_request_duration_seconds:99quantile{service_component="query-frontend", route="/query", cluster_name="test-cluster-name", deployment_environment="prod"}'
+            values: '6+0x15'
+
+      alert_rule_test:
+          - eval_time: 15m
+            alertname: TempoRequestLatency
+            exp_alerts:
+                - exp_labels:
+                      severity: critical
+                      tean: a-team
+                      id: testID
+                      route: /query
+                      service_component: query-frontend
+                      deployment_environment: prod
+                      cluster_name: test-cluster-name
+                  exp_annotations:
+                    summary: |
+                      query-frontend /query is experiencing 6.00s 99th percentile latency.
+                    runbook: https://github.com/grafana/tempo/tree/main/operations/tempo-mixin/runbook.md#TempoRequestLatency

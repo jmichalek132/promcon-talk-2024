@@ -1,0 +1,18 @@
+apiVersion: 1
+datasources:
+- name: Mimir Metamonitoring
+  type: prometheus
+  uid: mimir
+  access: proxy
+  orgId: 1
+  url: http://mimir-nginx.mimir.svc:80/prometheus
+  basicAuth: false
+  isDefault: true
+  editable: true
+  jsonData:
+    httpHeaderName1: X-Scope-OrgID
+    prometheusType: Mimir
+    prometheusVersion: 2.4.0
+    timeInterval: 60s
+  secureJsonData:
+    httpHeaderValue1: metamonitoring

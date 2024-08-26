@@ -1,0 +1,5 @@
+groups:
+  - name: MyTestGroup
+    rules:
+      - record: test
+        expr: 1
