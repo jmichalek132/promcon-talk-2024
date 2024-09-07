@@ -54,6 +54,10 @@ ruler:
     - mountPath: /rules-repo
       name: rules-volume
 
+metaMonitoring:
+  serviceMonitor:
+    enabled: true
+
 extraObjects:
   - kind: ServiceMonitor
     apiVersion: monitoring.coreos.com/v1

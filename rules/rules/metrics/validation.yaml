@@ -45,35 +45,20 @@ validationRules:
           label: "severity"
           allowedValues: ["Standard", "High", "Medium", "Informational", "info", "warning", "medium", "critical", "CLEARING"]
 
-  - name: check-ci-label
+  - name: check-id-label
     scope: Alert
     validations:
       - type: hasLabels
         params:
-          labels: ["ci"]
+          labels: ["id"]
 
-  - name: check-apmid-label
+  - name: check-team-label
     scope: Alert
     validations:
       - type: hasLabels
         params:
-          labels: ["apmid"]
+          labels: ["team"]
 
-  - name: check-mutually-exclusive
-    scope: Alert
-    validations:
-      - type: exclusiveLabels
-        params:
-          firstLabel: "evaIdLabels"
-          secondLabel: "__alertId__"
-
-  - name: check-send_mailalerts-label
-    scope: Alert
-    validations:
-      - type: labelHasAllowedValue
-        params:
-          label: "send_mailalerts"
-          allowedValues: ["true"]
 
   - name: check-summary-annotation
     scope: Alert
